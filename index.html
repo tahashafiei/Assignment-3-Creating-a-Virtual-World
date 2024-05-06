@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>Assignment 3</title>
+    </head>
+
+    <style>
+        body {
+            background-color: blue;
+            color: white;
+        }
+    </style>
+
+    <!-- <center> -->
+        <body onload="main()">
+            <div id="container">
+                <canvas id="webgl" width="1280" height="720">
+                    Please use a browser that supports "canvas"
+                </canvas>
+                
+                <p id="numdot"> ms: -- fps: -- </p>
+                <p id="drawcalls">Draw calls: -- </p>
+                    
+            </div>
+            <script src="./lib/webgl-utils.js"></script>
+            <script src="./lib/webgl-debug.js"></script>
+            <script src="./lib/cuon-utils.js"></script>
+            <script src="./lib/cuon-matrix-alt.js"></script>
+            <script src="./src/WebGLSetup.js"></script>
+            <script src="./src/Cube.js"></script>
+            <script src="./src/Shaders.js"></script>
+            <script src="./src/Triangle.js"></script>
+            <script src="./src/Camera.js"></script>
+            <script src="./src/Perlin.js"></script>
+            <script src="./src/World.js"></script>
+        </body>
+    <!-- </center> -->
+</html>
