@@ -7,12 +7,12 @@
 
     <style>
         body {
-            background-color: blue;
+            background-color: black;
             color: white;
         }
     </style>
 
-    <!-- <center> -->
+    <center>
         <body onload="main()">
             <div id="container">
                 <canvas id="webgl" width="1280" height="720">
@@ -20,7 +20,7 @@
                 </canvas>
                 
                 <p id="numdot"> ms: -- fps: -- </p>
-                <p id="drawcalls">Draw calls: -- </p>
+                <!-- <p id="drawcalls">Draw calls: -- </p> -->
                     
             </div>
             <script src="./lib/webgl-utils.js"></script>
@@ -32,8 +32,13 @@
             <script src="./src/Shaders.js"></script>
             <script src="./src/Triangle.js"></script>
             <script src="./src/Camera.js"></script>
-            <script src="./src/Perlin.js"></script>
             <script src="./src/World.js"></script>
+
         </body>
-    <!-- </center> -->
+        <p>Solve the Maze</p>
+        <p> Controls
+            <br> WASD to move farward, left, back and right
+            <br> RFQE or click-drag to look up, down, left, right
+        </p>
+    </center>
 </html>

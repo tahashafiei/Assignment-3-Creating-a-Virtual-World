@@ -1,14 +1,18 @@
 var VSHADER_SOURCE = `
+precision mediump float;
+
 attribute vec4 a_Position;
 attribute vec2 a_UV;
 attribute vec3 a_Normal;
+
 uniform mat4 u_ModelMatrix;
 uniform mat4 u_NormalMatrix;
 uniform mat4 u_ViewProjectionMatrix;
+
 varying vec2 v_UV;
 varying vec3 v_Position;
 varying vec4 v_Normal;
-varying float v_Dist;
+
   void main() {
     gl_Position = u_ViewProjectionMatrix * u_ModelMatrix * a_Position;
     v_UV = a_UV;
@@ -19,13 +23,17 @@ varying float v_Dist;
 // Fragment shader program              
 var FSHADER_SOURCE = `
   precision mediump float;
+  
   uniform vec4 u_FragColor;
   uniform vec3 u_LightPosition;
   uniform vec4 u_Eye;
+
   uniform sampler2D u_Sampler0;
   uniform sampler2D u_Sampler1;
   uniform sampler2D u_Sampler2;
+
   uniform int u_TextureMap;
+
   varying vec2 v_UV;
   varying vec3 v_Position;
   varying vec4 v_Normal;

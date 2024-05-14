@@ -9,7 +9,7 @@ let g_lastY = 0;
 var g_camera = new Camera();
 
 // var map_size = 32;
-var map_size = 64;
+var map_size = 32;
 var draw_calls = 0;
 var g_GrassImage = new Image();
 
@@ -24,6 +24,34 @@ let l_LightDirection = new Vector3([(map_size) * Math.sin(g_global_seconds/2), (
 var l_Floor = new Cube();
 var l_SkyBox = new Cube();
 var l_Water = new Cube();
+
+function setupUIListeners() {
+    canvas.onclick = async () => { if( !document.pointerLockElement ) { await canvas.requestPointerLock(); } };
+    document.addEventListener("pointerlockchange", () => {
+    if(document.pointerLockElement === canvas) {
+      document.onmousemove = (e) => rotateView(e);
+      document.onclick = (e) => {
+        // Determine the grid space being clicked on
+        let blockPos = [];
+        blockPos.push(Math.round(g_camera.at.elements[0]) + 16);
+        blockPos.push(Math.round(g_camera.at.elements[1]) - -1);
+        blockPos.push(Math.round(g_camera.at.elements[2]) + 16);
+
+        if(e.button == 2) {
+          // Right click = place block
+          setBlock(blockPos[0], blockPos[1], blockPos[2], TEXTURES.TEXTURE2);
+        } else if(e.button == 0) {
+          // Left click = remove block
+          removeBlock(blockPos[0], blockPos[1], blockPos[2]);
+        }
+      }
+    } else {
+      // Remove the listeners
+      document.onmousemove = null;
+      document.onclick = null;
+    }
+  })
+}
 
 // Input handling for camera movements
 function keydown(ev) {
@@ -107,74 +135,97 @@ function rotateView(ev) {
     g_lastY = y;
 }
 
-function get_frustum() {
-    let view_direction = new Vector3();
-    view_direction.set(g_camera.at);
-    view_direction.sub(g_camera.eye);
-    view_direction.normalize();
+var g_map = [
+    [11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 1, 1, 11, 11, 11],
+    [11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 1, 1, 11, 11, 11],
+    [11, 11, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 11, 1, 1, 11, 1, 1, 1, 1, 11, 1, 1, 11, 11, 11],
+    [11, 11, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 11, 1, 1, 11, 1, 1, 1, 1, 11, 1, 1, 11, 11, 11], 
+    [11, 11, 1, 1, 11, 1, 1, 11, 11, 11, 11, 1, 1, 11, 1, 1, 11, 11, 11, 1, 1, 11, 1, 1, 11, 11, 11, 1, 1, 11, 11, 11], 
+    [11, 11, 1, 1, 11, 11, 11, 11, 1, 1, 11, 11, 11, 11, 1, 1, 1, 1, 1, 1, 1, 11, 1, 1, 1, 1, 1, 1, 1, 11, 11, 11], 
+    [11, 11, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 11, 1, 1, 1, 1, 1, 1, 1, 11, 1, 1, 1, 1, 1, 1, 1, 11, 11, 11], 
+    [11, 11, 1, 1, 1, 1, 1, 1, 1, 1, 11, 11, 1, 11, 11, 11, 1, 1, 11, 11, 11, 11, 1, 1, 11, 11, 11, 11, 11, 11, 11, 11], 
+    [11, 11, 11, 11, 11, 11, 11, 11, 1, 1, 11, 11, 1, 11, 1, 11, 1, 1, 11, 1, 1, 1, 1, 1, 11, 1, 1, 1, 1, 1, 11, 11], 
+    [11, 11, 1, 1, 1, 1, 1, 11, 1, 1, 11, 1, 1, 11, 1, 1, 1, 1, 11, 1, 1, 1, 1, 1, 11, 1, 1, 1, 1, 1, 11, 11], 
+    [11, 11, 1, 1, 1, 1, 1, 11, 1, 1, 11, 1, 1, 11, 11, 11, 1, 1, 11, 1, 1, 1, 1, 1, 11, 1, 1, 11, 1, 1, 11, 11], 
+    [11, 11, 1, 1, 11, 1, 1, 11, 1, 1, 11, 11, 11, 11, 11, 11, 1, 1, 11, 1, 1, 1, 1, 1, 11, 1, 1, 11, 1, 1, 11, 11], 
+    [11, 11, 1, 1, 11, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 11, 1, 1, 11, 1, 1, 1, 1, 1, 11, 11, 11, 11, 1, 1, 11, 11], 
+    [11, 11, 1, 1, 11, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 11, 1, 1, 11, 1, 1, 1, 1, 1, 11, 11, 11, 11, 1, 1, 11, 11], 
+    [11, 11, 1, 11, 11, 1, 1, 11, 11, 11, 11, 11, 11, 1, 1, 11, 1, 1, 11, 11, 11, 1, 1, 11, 11, 1, 1, 11, 1, 1, 11, 11], 
+    [11, 11, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 11, 1, 1, 11, 1, 1, 1, 1, 1, 1, 1, 11, 11, 1, 1, 11, 1, 1, 11, 11], 
+    [11, 11, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 11, 1, 1, 11, 1, 1, 1, 1, 1, 1, 1, 11, 1, 1, 1, 1, 1, 1, 11, 11], 
+    [11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 1, 1, 11, 1, 1, 11, 11, 11, 11, 11, 11, 11, 11, 11, 1, 1, 1, 1, 1, 1, 11, 11], 
+    [11, 11, 1, 1, 1, 1, 1, 1, 1, 11, 1, 1, 11, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 11, 11, 11, 11, 11, 1, 1, 11, 11], 
+    [11, 11, 1, 1, 1, 1, 1, 1, 1, 11, 1, 1, 11, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 11, 11, 11, 11, 11, 1, 1, 11, 11], 
+    [11, 11, 1, 1, 11, 11, 11, 11, 11, 11, 1, 1, 11, 11, 11, 11, 11, 11, 11, 11, 11, 1, 1, 11, 11, 1, 1, 1, 1, 1, 11, 11], 
+    [11, 11, 1, 1, 11, 1, 1, 1, 1, 1, 1, 1, 11, 11, 1, 1, 1, 1, 1, 1, 11, 1, 1, 11, 11, 1, 1, 1, 1, 1, 11, 11], 
+    [11, 11, 1, 1, 11, 1, 1, 1, 1, 1, 1, 1, 11, 11, 1, 1, 1, 1, 1, 1, 11, 1, 1, 1, 1, 1, 1, 11, 1, 1, 11, 11], 
+    [11, 11, 1, 1, 11, 1, 1, 11, 11, 11, 11, 11, 11, 11, 1, 1, 11, 1, 11, 11, 11, 1, 1, 1, 1, 1, 1, 11, 1, 1, 11, 11], 
+    [11, 11, 1, 1, 11, 1, 1, 11, 1, 1, 1, 1, 1, 1, 1, 1, 11, 1, 11, 11, 11, 11, 11, 11, 11, 1, 1, 11, 11, 11, 11, 11], 
+    [11, 11, 1, 1, 11, 1, 1, 11, 1, 1, 1, 1, 1, 1, 1, 1, 11, 1, 1, 1, 1, 1, 1, 1, 11, 1, 1, 1, 1, 1, 11, 11], 
+    [11, 11, 1, 1, 11, 1, 1, 11, 11, 11, 11, 11, 11, 11, 1, 1, 11, 1, 1, 1, 1, 1, 1, 1, 11, 1, 1, 1, 1, 1, 11, 11],
+    [11, 11, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 11, 11, 11, 11, 11, 11, 1, 1, 11, 11, 11, 11, 1, 1, 11, 11], 
+    [11, 11, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 11, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 11, 11],
+    [11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 1, 1, 11, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 11, 11],
+    [11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 1, 1, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11],
+    [11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 1, 1, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11]
+];
 
-    let up = new Vector3();
-    up.set(view_direction);
-    up = Vector3.cross(g_camera.up, up);
-    up.normalize();
-    let angle_v = Math.acos(Vector3.dot(g_camera.up, view_direction) / (up.magnitude() * view_direction.magnitude()));
-
-    let right = new Vector3();
-    right.set(view_direction);
-    right = Vector3.cross(g_camera.up, right);
-    right.normalize();
-    let angle_r = Math.atan2(right.elements[2], right.elements[0]) + Math.PI/2;
-
-    return angle_v, angle_r
-}
+let g_worldPieces = []
 
 function drawMap() {
-    // Camera Frustum Culling
-    let angle_v, angle_r = get_frustum();
-    let cam_x = Math.round(g_camera.eye.elements[0]);
-    let cam_z = Math.round(g_camera.eye.elements[2]);
-    let block_x, block_z, x_pos, z_pos, angle_hor;
-
-    l_Floor.color = [0.2, 0.4, 0.05, 1];
-    for (let i = 0.0; i < map_size; i += 1) {
-        for (let j = 0; j < map_size; j += 1) {
-            x_pos = i - map_size/2;
-            z_pos = j - map_size/2;
-
-            angle_hor = Math.atan2(z_pos, x_pos) - angle_r;
-            angle_hor = Math.atan2(Math.sin(angle_hor), Math.cos(angle_hor));
-
-            if (Math.cos(angle_hor) * Math.sqrt(x_pos*x_pos + z_pos*z_pos) <= 0) {
-                continue;
+    for (let x = 0; x < 32; x++) {
+        for (let z = 0; z < 32; z += 1) {
+            const height = g_map[x][z];
+            for (let y = 0; y < height; y++) {
+                if (y > 0) {
+                    setBlock(x, y, z, 2);
+                } else {
+                    setBlock(x, y, z, 1);
+                }
             }
-
-            l_Floor.model_matrix.setIdentity();
-            l_Floor.texture_map = 1;
-            l_Floor.model_matrix.translate(cam_x + i - map_size/2, -4, cam_z + j - map_size/2);
-            block_x = l_Floor.model_matrix.elements[12]/10.0;
-            block_z = l_Floor.model_matrix.elements[14]/10.0;
-            l_Floor.model_matrix.translate(0, Math.round(perlin.get(block_x, block_z) * 4), 0);
-            if (l_Floor.model_matrix.elements[13] < -5) {
-                continue;
-            }
-            l_Floor.render();
         }
+    }
+}
+
+function getIndex(x, y, z) {
+    return ((z * 32 * 32) + (y * 32) + x) + 2;
+  }
+  
+  // Places a block at the specified coordinates
+  function setBlock(x, y, z, texture) {
+    if(g_worldPieces[getIndex(x,y,z)]) {
+      // Block alrady exists. Don't place another one
+      return;
+    }
+
+    var body = new Cube();
+    body.model_matrix.setIdentity();
+    body.texture_map = texture;
+    body.model_matrix.translate(x -36,y-4, z-18);
+    g_worldPieces[getIndex(x, y, z)] = body;
+  }
+  
+  // Removes a block at the specified coordinates
+  function removeBlock(x, y, z) {
+    g_worldPieces[getIndex(x, y, z)] = undefined;
+  }
+  
+  // Renders all pieces of the world
+  function renderWorld() {
+    for(let cube of g_worldPieces) {
+      if(cube) {
+        cube.render();
+      }
     }
 
     l_SkyBox.model_matrix.setIdentity();
     l_SkyBox.color = [0.1 + (l_LightDirection.elements[1]/map_size/2), 0.5 + (l_LightDirection.elements[1]/map_size/2), 0.9 + (l_LightDirection.elements[1]/map_size/2), 1.0];
     l_SkyBox.model_matrix.translate(-map_size*4 + g_camera.eye.elements[0], -5, map_size*4 + g_camera.eye.elements[2]);
-    l_SkyBox.model_matrix.scale(map_size*8, map_size*8, map_size*8);
+    l_SkyBox.model_matrix.scale(map_size*32, map_size*32, map_size*32);
     gl.cullFace(gl.FRONT);
     l_SkyBox.render();
     gl.cullFace(gl.BACK);
-
-    l_Water.model_matrix.setIdentity();
-    // l_Water.color = [0, 0.4, 0.8, 1];
-    // l_Water.texture_map = 0;
-    l_Water.texture_map = 2;
-    l_Water.render();
-}
+  }
 
 // Draw every shape that is supposed to be in the canvas 
 function renderAllShapes() {
@@ -204,7 +255,8 @@ function renderAllShapes() {
     let origin = new Cube();
     origin.model_matrix.scale(0, 0, 0);
     origin.render();
-    drawMap();
+
+    renderWorld();
     
     sendTextToHTML("Draw calls: " + draw_calls, 'drawcalls');
     draw_calls = 0;
@@ -217,18 +269,19 @@ function main() {
     // Set up GLSL shader programs and connect GLSL variables
     connectVariablesToGLSL();
 
+    // setupUIListeners();
+
     // Specify the color for clearing <canvas>
     gl.clearColor(0, 0, 0, 1.0);
 
-    // Set up actions for the HTML UI elements
-    // addActionsForHtmlUI();
-
     canvas.addEventListener('mousemove', function(ev) {rotateView(ev)});
+
     document.onkeydown = function(ev) {keydown(ev)};
 
-    let urls = ["./src/textures/Netherrack.png", "./src/textures/Lava.png"];
+    let urls = ["./src/textures/BlackStone.png", "./src/textures/Nether_Bricks_mapped.png"];
     initTextures(urls);
 
     // Render
+    drawMap();
     requestAnimationFrame(tick);
 }

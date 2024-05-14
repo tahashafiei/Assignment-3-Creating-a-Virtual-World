@@ -19,8 +19,8 @@ class Camera {
         b.set(this.at);
         b.sub(this.eye);
         b.normalize();
-        this.eye = this.eye.sub(f);
-        this.at = this.at.sub(f);
+        this.eye = this.eye.sub(b);
+        this.at = this.at.sub(b);
     }
 
     left() {

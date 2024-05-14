@@ -1,8 +1,10 @@
 let canvas;
 let gl;
+
 let a_Position;
 let a_UV;
 let a_Normal;
+
 let u_FragColor;
 let u_ModelMatrix;
 let u_NormalMatrix;
@@ -11,7 +13,10 @@ let u_Sampler1;
 let u_LightPosition;
 let u_TextureMap;
 let u_ViewProjectionMatrix;
+
 let g_Textures = [];
+let g_VertexBuffer;
+let g_UVBuffer;
 
 function setupWebGL() {
     // Retrieve <canvas> element
@@ -107,6 +112,17 @@ function connectVariablesToGLSL() {
         return;
     }
 
+    // Create a vertex buffer and UV buffer
+    g_VertexBuffer = gl.createBuffer();
+    if (!g_VertexBuffer) {
+        throw('Failed to create the Vertex buffer object');
+    }
+
+    g_UVBuffer = gl.createBuffer();
+    if (!g_UVBuffer) {
+        throw('Failed to create the UV buffer object');
+    }
+
     // Set an initial value for this matrix to identify
     var l_ModelMatrix = new Matrix4();
     var l_ViewProjectionMatrix = new Matrix4();
@@ -117,37 +133,37 @@ function connectVariablesToGLSL() {
 
 function initTextures(urls) {    
 
-    var grassImage = new Image();
-    if (!grassImage) {
+    var netherrackImage = new Image();
+    if (!netherrackImage) {
         console.log('Failed to create the grassImage object');
         return false;
     }
     // Tell the browser to load an image
-    grassImage.src = urls[0];
+    netherrackImage.src = urls[0];
     // Register the event handler to be called on loading an image
-    grassImage.onload = function(){ 
+    netherrackImage.onload = function(){ 
         var texture = gl.createTexture();
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, texture);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, grassImage);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, netherrackImage);
         g_Textures.push(texture); 
     };
 
-    var lavaImage = new Image();
-    if (!lavaImage) {
+    var brickImage = new Image();
+    if (!brickImage) {
         console.log('Failed to create the lavaImage object');
         return false;
     }
-    lavaImage.src = urls[1];
-    lavaImage.onload = function(){
+    brickImage.src = urls[1];
+    brickImage.onload = function(){
         var texture = gl.createTexture();
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
         gl.activeTexture(gl.TEXTURE1);
         gl.bindTexture(gl.TEXTURE_2D, texture);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, lavaImage);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, brickImage);
         g_Textures.push(texture);
     };
     
